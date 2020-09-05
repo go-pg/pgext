@@ -22,7 +22,7 @@ db := pg.Connect(&pg.Options{...})
 db.AddQueryHook(&pgext.OpenTelemetryHook{})
 ```
 
-## Print error and a query using DebugHook
+## Print failed queries using DebugHook
 
 ```go
 db := pg.Connect(&pg.Options{...})
