@@ -13,6 +13,8 @@ import (
 	"go.opentelemetry.io/otel/label"
 )
 
+var tracer = global.Tracer("github.com/go-pg/pg")
+
 type queryOperation interface {
 	Operation() orm.QueryOp
 }
@@ -27,7 +29,7 @@ func (h OpenTelemetryHook) BeforeQuery(ctx context.Context, evt *pg.QueryEvent) 
 		return ctx, nil
 	}
 
-	ctx, _ = global.Tracer("github.com/go-pg/pg").Start(ctx, "")
+	ctx, _ = tracer.Start(ctx, "")
 	return ctx, nil
 }
 
