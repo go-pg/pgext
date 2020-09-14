@@ -19,12 +19,12 @@ type queryOperation interface {
 	Operation() orm.QueryOp
 }
 
-// OpenTelemetryHook is a pg.QueryHook that adds OpenTemetry instrumentation.
+// OpenTelemetryHook is a pg.QueryHook that adds OpenTelemetry instrumentation.
 type OpenTelemetryHook struct{}
 
 var _ pg.QueryHook = (*OpenTelemetryHook)(nil)
 
-func (h OpenTelemetryHook) BeforeQuery(ctx context.Context, evt *pg.QueryEvent) (context.Context, error) {
+func (h OpenTelemetryHook) BeforeQuery(ctx context.Context, _ *pg.QueryEvent) (context.Context, error) {
 	if !trace.SpanFromContext(ctx).IsRecording() {
 		return ctx, nil
 	}
@@ -63,11 +63,12 @@ func (h OpenTelemetryHook) AfterQuery(ctx context.Context, evt *pg.QueryEvent) e
 
 	if operation != "" {
 		span.SetName(string(operation))
-	} else if idx := strings.IndexByte(query, ' '); idx >= 0 {
-		if idx > 20 {
-			idx = 20
-		}
-		span.SetName(strings.TrimSpace(query[:idx]))
+	} else if idx := strings.IndexByte(query, ' '); idx > 0 && idx <= 20 {
+		span.SetName(query[:idx])
+	} else if len(query) > 20 {
+		span.SetName(strings.TrimSpace(query[:20]))
+	} else {
+		span.SetName(query)
 	}
 
 	const queryLimit = 5000
@@ -101,8 +102,7 @@ func (h OpenTelemetryHook) AfterQuery(ctx context.Context, evt *pg.QueryEvent) e
 		case pg.ErrNoRows, pg.ErrMultiRows:
 			span.SetStatus(codes.NotFound, "")
 		default:
-			span.SetStatus(codes.Internal, "")
-			span.RecordError(ctx, evt.Err)
+			span.RecordError(ctx, evt.Err, trace.WithErrorStatus(codes.Internal))
 		}
 	} else if evt.Result != nil {
 		numRow := evt.Result.RowsAffected()
