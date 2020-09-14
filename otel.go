@@ -63,12 +63,15 @@ func (h OpenTelemetryHook) AfterQuery(ctx context.Context, evt *pg.QueryEvent) e
 
 	if operation != "" {
 		span.SetName(string(operation))
-	} else if idx := strings.IndexByte(query, ' '); idx > 0 && idx <= 20 {
-		span.SetName(query[:idx])
-	} else if len(query) > 20 {
-		span.SetName(strings.TrimSpace(query[:20]))
 	} else {
-		span.SetName(query)
+		name := query
+		if idx := strings.IndexByte(name, ' '); idx > 0 {
+			name = name[:idx]
+		}
+		if len(name) > 20 {
+			name = name[:20]
+		}
+		span.SetName(strings.TrimSpace(name))
 	}
 
 	const queryLimit = 5000
