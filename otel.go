@@ -86,9 +86,9 @@ func (h OpenTelemetryHook) AfterQuery(ctx context.Context, evt *pg.QueryEvent) e
 		label.String("db.system", "postgres"),
 		label.String("db.statement", query),
 
-		label.String("frame.func", fn),
-		label.String("frame.file", file),
-		label.Int("frame.line", line),
+		label.String("code.function", fn),
+		label.String("code.filepath", file),
+		label.Int("code.lineno", line),
 	)
 
 	if db, ok := evt.DB.(*pg.DB); ok {
