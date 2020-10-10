@@ -103,9 +103,9 @@ func (h OpenTelemetryHook) AfterQuery(ctx context.Context, evt *pg.QueryEvent) e
 	if evt.Err != nil {
 		switch evt.Err {
 		case pg.ErrNoRows, pg.ErrMultiRows:
-			span.SetStatus(codes.NotFound, "")
+			// nothing
 		default:
-			span.RecordError(ctx, evt.Err, trace.WithErrorStatus(codes.Internal))
+			span.RecordError(ctx, evt.Err, trace.WithErrorStatus(codes.Error))
 		}
 	} else if evt.Result != nil {
 		numRow := evt.Result.RowsAffected()
